@@ -1,0 +1,6 @@
+@import "tailwindcss";
+
+/* Custom theme tokens — replaces tailwind.config.js in Tailwind v4 */
+@theme {
+  --font-family-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", Consolas, monospace;
+}
