@@ -174,6 +174,18 @@ const ENTRIES: MockEntry[] = [
 // `,
 //   },
 
+
+// def safe_divide(numerator, denominator):
+//     """
+//     Safely divide two numbers, returning a float result.
+
+//     Raises:
+//         ValueError: If denominator is zero.
+//     """
+//     if denominator == 0:
+//         raise ValueError("Cannot divide by zero")
+//     return numerator / denominator
+
   // ── 3. Safe division with error handling ─────────────────────────────────
   {
     label: 'safe_divide',
