@@ -1,6 +1,27 @@
 @import "tailwindcss";
 
-/* Custom theme tokens — replaces tailwind.config.js in Tailwind v4 */
 @theme {
   --font-family-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", Consolas, monospace;
+
+  /* TUM Corporate Design palette */
+  --color-tum-blue:       #0065BD;
+  --color-tum-blue-dark:  #005293;
+  --color-tum-blue-mid:   #64A0C8;
+  --color-tum-blue-light: #98C0E3;
+  --color-tum-gray:       #9EA3A8;
+}
+
+@keyframes wave-bar {
+  0%, 100% { transform: scaleY(0.12); opacity: 0.4; }
+  50%       { transform: scaleY(1);    opacity: 1;   }
+}
+
+@keyframes blur-appear {
+  from { filter: blur(10px); opacity: 0; }
+  to   { filter: blur(0px);  opacity: 1; }
+}
+
+@keyframes cursor-blink {
+  0%, 100% { opacity: 0.8; }
+  50%       { opacity: 0;   }
 }

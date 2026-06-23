@@ -1,6 +1,5 @@
 <script setup lang="ts">
 const { login, error, loading } = useAuth()
-
 const username = ref('')
 const password = ref('')
 
@@ -11,59 +10,60 @@ async function handleSubmit() {
 </script>
 
 <template>
-  <div class="min-h-screen bg-slate-950 flex items-center justify-center p-4">
+  <div
+    class="min-h-screen flex items-center justify-center p-6"
+    style="background: linear-gradient(135deg, #fce4ec 0%, #f3e5f5 30%, #e8eaf6 60%, #e3f2fd 80%, #e0f7fa 100%)"
+  >
     <div class="w-full max-w-sm">
 
       <!-- Branding -->
       <div class="text-center mb-8">
-        <div class="text-5xl mb-3">🐍</div>
-        <h1 class="text-2xl font-bold text-white tracking-tight">PyTest Generator</h1>
-        <p class="text-slate-400 text-sm mt-1">AI-powered Python unit test generation</p>
+        <div class="text-6xl mb-4">🐍</div>
+        <h1 class="text-3xl font-bold text-tum-blue-dark tracking-tight">TU PyTest</h1>
+        <p class="text-sm text-tum-blue-mid mt-2">AI-powered unit test generation</p>
       </div>
 
-      <!-- Card -->
-      <div class="bg-slate-800 rounded-2xl p-8 shadow-2xl border border-slate-700">
-        <h2 class="text-base font-semibold text-white mb-6">Admin Sign In</h2>
+      <!-- Glass card -->
+      <div
+        class="rounded-3xl p-8 shadow-xl"
+        style="background: rgba(255,255,255,0.65); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border: 1.5px solid rgba(255,255,255,0.9);"
+      >
+        <h2 class="text-base font-semibold text-tum-blue-dark mb-6">Admin Sign In</h2>
 
         <form @submit.prevent="handleSubmit" class="space-y-4">
+
           <div>
-            <label class="block text-sm font-medium text-slate-300 mb-1.5">
-              Username
-            </label>
+            <label class="block text-xs font-semibold text-tum-blue uppercase tracking-widest mb-2">Username</label>
             <input
               v-model="username"
               type="text"
               autocomplete="username"
               required
               :disabled="loading"
-              class="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2.5 text-white text-sm
-                     placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                     disabled:opacity-50 transition-colors"
               placeholder="Enter username"
+              class="w-full rounded-2xl px-4 py-3 text-sm text-tum-blue-dark outline-none placeholder:text-tum-blue-light disabled:opacity-50 transition-shadow"
+              style="background: rgba(255,255,255,0.8); border: 1.5px solid rgba(0,101,189,0.25);"
             />
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-slate-300 mb-1.5">
-              Password
-            </label>
+            <label class="block text-xs font-semibold text-tum-blue uppercase tracking-widest mb-2">Password</label>
             <input
               v-model="password"
               type="password"
               autocomplete="current-password"
               required
               :disabled="loading"
-              class="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2.5 text-white text-sm
-                     placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                     disabled:opacity-50 transition-colors"
               placeholder="Enter password"
+              class="w-full rounded-2xl px-4 py-3 text-sm text-tum-blue-dark outline-none placeholder:text-tum-blue-light disabled:opacity-50 transition-shadow"
+              style="background: rgba(255,255,255,0.8); border: 1.5px solid rgba(0,101,189,0.25);"
             />
           </div>
 
-          <!-- Error message -->
           <div
             v-if="error"
-            class="bg-red-950/60 border border-red-700/60 rounded-lg px-3 py-2.5 text-red-300 text-sm"
+            class="rounded-2xl px-4 py-3 text-sm text-red-500"
+            style="background: rgba(254,202,202,0.45); border: 1px solid rgba(252,165,165,0.5);"
           >
             {{ error }}
           </div>
@@ -71,13 +71,12 @@ async function handleSubmit() {
           <button
             type="submit"
             :disabled="loading || !username.trim() || !password"
-            class="w-full bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:text-slate-500
-                   disabled:cursor-not-allowed text-white font-medium py-2.5 px-4 rounded-lg
-                   transition-colors duration-150 text-sm mt-2"
+            class="w-full mt-2 rounded-full py-3.5 text-sm font-semibold text-white transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+            style="background: #0065BD; border: 1px solid rgba(255,255,255,0.35); box-shadow: 0 4px 18px rgba(0,101,189,0.35), inset 0 1px 0 rgba(255,255,255,0.3);"
           >
-            <span v-if="loading">Signing in…</span>
-            <span v-else>Sign in</span>
+            {{ loading ? 'Signing in…' : 'Sign in →' }}
           </button>
+
         </form>
       </div>
 

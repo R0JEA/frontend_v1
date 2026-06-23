@@ -7,21 +7,21 @@ const { logout } = useAuth()
 const config = useRuntimeConfig()
 const testModeAvailable = config.public.testModeAvailable as boolean
 
-const testMode = ref(false)
-const format = ref<OutputFormat>('pytest')
 const MODELS = [
   { value: 'model1', label: 'Model 1' },
   { value: 'model2', label: 'Model 2' },
 ]
 
 const model = ref(MODELS[0].value)
+const testMode = ref(false)
+const format = ref<OutputFormat>('pytest')
 const code = ref('')
 const filename = ref<string | undefined>()
 const chatContainer = ref<HTMLElement | null>(null)
 const fileInput = ref<HTMLInputElement | null>(null)
 
 async function handleGenerate() {
-  if (!code.value.trim() || loading.value) return
+  if (!code.value.trim() || !model.value || loading.value) return
   const currentCode = code.value
   const currentFilename = filename.value
   code.value = ''
@@ -30,14 +30,10 @@ async function handleGenerate() {
 }
 
 function handleKeydown(event: KeyboardEvent) {
-  if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
-    handleGenerate()
-  }
+  if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') handleGenerate()
 }
 
-function triggerFileInput() {
-  fileInput.value?.click()
-}
+function triggerFileInput() { fileInput.value?.click() }
 
 function handleFileSelect(event: Event) {
   const file = (event.target as HTMLInputElement).files?.[0]
@@ -58,83 +54,99 @@ function handleFileSelect(event: Event) {
 
 watch(messages, async () => {
   await nextTick()
-  if (chatContainer.value) {
-    chatContainer.value.scrollTop = chatContainer.value.scrollHeight
-  }
+  if (chatContainer.value) chatContainer.value.scrollTop = chatContainer.value.scrollHeight
 }, { deep: true })
+
+// Waveform: magenta → blue → cyan (kept from design brief)
+function waveColor(i: number, total: number): string {
+  const hue = Math.round(288 - (i / (total - 1)) * 103)
+  return `hsl(${hue}, 88%, 62%)`
+}
+const WAVE_DUR = [0.9, 1.1, 0.8, 1.3, 1.0, 1.25, 0.85, 1.15]
+function waveDuration(i: number) { return `${WAVE_DUR[i % WAVE_DUR.length]}s` }
+function waveDelay(i: number) { return `${(i % 10) * 0.08}s` }
+
+// Glass styles — neutral (header pills, selects) and primary (action button)
+const glass = 'background: rgba(255,255,255,0.38); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid rgba(255,255,255,0.8); box-shadow: 0 2px 10px rgba(0,101,189,0.07), inset 0 1px 0 rgba(255,255,255,0.95);'
+const glassPrimary = 'background: #0065BD; border: 1px solid rgba(255,255,255,0.35); box-shadow: 0 4px 18px rgba(0,101,189,0.35), inset 0 1px 0 rgba(255,255,255,0.25);'
 </script>
 
 <template>
-  <div class="flex flex-col h-screen bg-slate-950 text-white">
+  <div
+    class="flex flex-col h-screen"
+    style="background: linear-gradient(135deg, #fce4ec 0%, #f3e5f5 30%, #e8eaf6 60%, #e3f2fd 80%, #e0f7fa 100%)"
+  >
 
     <!-- ── Header ── -->
-    <header class="flex items-center justify-between px-5 py-3 bg-slate-900 border-b border-slate-700/60 flex-shrink-0">
+    <header
+      class="flex items-center justify-between px-5 py-3 flex-shrink-0"
+      style="background: rgba(255,255,255,0.5); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.75);"
+    >
       <div class="flex items-center gap-2.5">
         <span class="text-xl">🐍</span>
-        <span class="font-semibold text-sm tracking-tight">PyTest Generator</span>
+        <span class="font-semibold text-sm text-tum-blue-dark tracking-tight">TU PyTest</span>
       </div>
 
-      <div class="flex items-center gap-4">
+      <div class="flex items-center gap-2.5">
 
-        <!-- Test Mode toggle — hidden when NUXT_PUBLIC_TEST_MODE_AVAILABLE=false -->
+        <!-- Test Mode toggle -->
         <button
           v-if="testModeAvailable"
           @click="testMode = !testMode"
-          class="flex items-center gap-2 group"
-          :title="testMode ? 'Test mode ON — using mock responses' : 'Test mode OFF — click to use mock responses'"
+          class="flex items-center gap-2 rounded-full px-3 py-1.5 transition-all"
+          :style="glass"
+          :title="testMode ? 'Test mode ON' : 'Test mode OFF'"
         >
-          <span :class="['text-xs font-medium transition-colors', testMode ? 'text-amber-400' : 'text-slate-400 group-hover:text-slate-200']">
-            Test Mode
-          </span>
-          <!-- Toggle pill -->
-          <div :class="['relative inline-flex h-5 w-9 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out',
-            testMode ? 'bg-amber-500' : 'bg-slate-600 group-hover:bg-slate-500']">
-            <span :class="['pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition duration-200 ease-in-out',
-              testMode ? 'translate-x-4' : 'translate-x-0']" />
+          <span class="text-xs font-semibold text-tum-blue">Test Mode</span>
+          <div class="relative flex items-center w-7 h-4 rounded-full" style="background: rgba(0,101,189,0.18);">
+            <span
+              class="absolute inline-block w-3 h-3 rounded-full bg-white shadow transition-all duration-200"
+              :class="testMode ? 'left-3.5' : 'left-0.5'"
+            />
           </div>
         </button>
 
+        <div class="h-5 w-px" style="background: rgba(0,101,189,0.2)" />
+
         <!-- Model selector -->
-        <div class="flex items-center gap-2">
-          <label class="text-xs text-slate-400 font-medium">Model:</label>
+        <label class="flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 cursor-pointer" :style="glass">
+          <span class="text-xs text-tum-blue font-medium whitespace-nowrap">Model</span>
           <select
             v-model="model"
             :disabled="testMode"
-            class="bg-slate-800 border border-slate-600 text-white text-sm rounded-lg px-2.5 py-1.5
-                   focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer
-                   disabled:opacity-40 disabled:cursor-not-allowed"
+            class="text-xs text-tum-blue-dark font-medium bg-transparent outline-none cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <option v-for="m in MODELS" :key="m.value" :value="m.value">{{ m.label }}</option>
           </select>
-        </div>
+        </label>
 
         <!-- Format selector -->
-        <div class="flex items-center gap-2">
-          <label class="text-xs text-slate-400 font-medium">Format:</label>
+        <label class="flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 cursor-pointer" :style="glass">
+          <span class="text-xs text-tum-blue font-medium">Format</span>
           <select
             v-model="format"
-            class="bg-slate-800 border border-slate-600 text-white text-sm rounded-lg px-2.5 py-1.5
-                   focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+            class="text-xs text-tum-blue-dark font-medium bg-transparent outline-none cursor-pointer"
           >
             <option value="pytest">pytest</option>
             <option value="unittest">unittest</option>
           </select>
-        </div>
+        </label>
 
         <!-- Clear -->
         <button
           v-if="messages.length > 0"
           @click="clearHistory"
-          class="text-xs text-slate-500 hover:text-slate-300 transition-colors px-2 py-1 rounded"
+          class="text-xs text-tum-blue font-medium rounded-full px-3 py-1.5 transition-opacity hover:opacity-70"
+          :style="glass"
         >
           Clear
         </button>
 
-        <!-- Logout -->
+        <!-- Sign out -->
         <button
           @click="logout"
-          class="text-xs bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300
-                 hover:text-white px-3 py-1.5 rounded-lg transition-colors"
+          class="text-xs text-tum-blue-dark font-medium rounded-full px-3.5 py-1.5 transition-opacity hover:opacity-70"
+          :style="glass"
         >
           Sign out
         </button>
@@ -146,49 +158,45 @@ watch(messages, async () => {
 
       <!-- Empty state -->
       <div v-if="messages.length === 0 && !loading" class="flex flex-col items-center justify-center h-full text-center py-16">
-        <div class="text-6xl mb-4 opacity-80">⚗️</div>
-        <h2 class="text-lg font-semibold text-white mb-2">Generate Unit Tests</h2>
-        <p class="text-slate-400 text-sm max-w-md leading-relaxed">
-          Paste a Python function below or upload a
-          <code class="text-blue-400 bg-slate-800 px-1 py-0.5 rounded text-xs">.py</code> file,
-          choose <strong class="text-slate-200">pytest</strong> or <strong class="text-slate-200">unittest</strong>,
-          and click <strong class="text-slate-200">Generate Tests</strong>.
+        <div class="text-6xl mb-5">⚗️</div>
+        <h2 class="text-xl font-bold text-tum-blue-dark mb-2">Generate Unit Tests</h2>
+        <p class="text-tum-blue-mid text-sm max-w-sm leading-relaxed">
+          Paste a Python function or upload a
+          <code class="text-tum-blue bg-white/60 px-1.5 py-0.5 rounded-lg text-xs">.py</code>
+          file, pick your format and model, then hit Generate.
         </p>
-        <p v-if="testModeAvailable" class="mt-4 text-xs text-slate-600">
-          Use the <span class="text-amber-500/70">Test Mode</span> toggle to get mock responses without a backend.
+        <p v-if="testModeAvailable" class="mt-4 text-xs text-tum-blue-mid">
+          Enable <span class="font-semibold text-tum-blue">Test Mode</span> to try without a backend.
         </p>
-        <p class="text-slate-600 text-xs mt-2">Tip: Ctrl + Enter to submit</p>
+        <p class="text-tum-blue-light text-xs mt-2">Ctrl + Enter to submit</p>
       </div>
 
       <!-- Messages -->
-      <ChatMessage
-        v-for="msg in messages"
-        :key="msg.id"
-        :message="msg"
-      />
+      <ChatMessage v-for="msg in messages" :key="msg.id" :message="msg" />
 
-      <!-- Loading indicator -->
-      <div v-if="loading" class="flex items-center gap-3 pl-1">
-        <div class="flex gap-1.5">
-          <span class="w-2 h-2 rounded-full animate-bounce"
-            :class="testMode ? 'bg-amber-500' : 'bg-blue-500'"
-            style="animation-delay: 0ms" />
-          <span class="w-2 h-2 rounded-full animate-bounce"
-            :class="testMode ? 'bg-amber-500' : 'bg-blue-500'"
-            style="animation-delay: 150ms" />
-          <span class="w-2 h-2 rounded-full animate-bounce"
-            :class="testMode ? 'bg-amber-500' : 'bg-blue-500'"
-            style="animation-delay: 300ms" />
+      <!-- Soundwave loading -->
+      <div v-if="loading" class="flex flex-col items-center gap-4 py-6">
+        <div class="flex items-center gap-[3px]" style="height: 52px;">
+          <div
+            v-for="i in 48" :key="i"
+            :style="{
+              width: '3px', height: '44px', borderRadius: '99px', transformOrigin: 'center',
+              background: waveColor(i, 48),
+              animation: `wave-bar ${waveDuration(i)} ease-in-out infinite`,
+              animationDelay: waveDelay(i),
+            }"
+          />
         </div>
-        <span class="text-sm text-slate-400">
-          {{ testMode ? 'Generating mock tests…' : 'Generating tests…' }}
+        <span class="text-xs text-tum-blue-mid font-medium">
+          {{ 'Generating tests…' }}
         </span>
       </div>
 
       <!-- Error -->
       <div
         v-if="error"
-        class="bg-red-950/50 border border-red-700/50 rounded-xl px-4 py-3 text-red-300 text-sm max-w-2xl"
+        class="rounded-2xl px-4 py-3 text-sm text-red-500 max-w-xl"
+        style="background: rgba(254,202,202,0.45); border: 1px solid rgba(252,165,165,0.5);"
       >
         <span class="font-semibold">Error:</span> {{ error }}
       </div>
@@ -196,65 +204,58 @@ watch(messages, async () => {
     </div>
 
     <!-- ── Input area ── -->
-    <div class="flex-shrink-0 border-t border-slate-700/60 bg-slate-900 p-4"
-         :class="testMode ? 'border-t-amber-500/30' : ''">
+    <div
+      class="flex-shrink-0 p-4"
+      style="background: rgba(255,255,255,0.5); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-top: 1px solid rgba(255,255,255,0.75);"
+    >
+     
 
-      <!-- Test mode banner -->
-      <div v-if="testMode" class="flex items-center gap-2 mb-3 text-xs text-amber-400/80 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2">
-        <span>⚡</span>
-        <span>Test mode — response will be a random pre-written sample, not real AI output.</span>
-      </div>
-
-      <!-- File loaded indicator -->
-      <div v-if="filename" class="flex items-center gap-2 mb-2 text-xs text-slate-400">
+      <!-- File indicator -->
+      <div v-if="filename" class="flex items-center gap-2 mb-2 text-xs text-tum-blue-mid">
         <span>📄</span>
         <span class="font-mono">{{ filename }}</span>
-        <button @click="filename = undefined" class="text-slate-600 hover:text-slate-300 ml-0.5 transition-colors">✕</button>
+        <button @click="filename = undefined" class="text-tum-blue-light hover:text-tum-blue ml-1 transition-colors">✕</button>
       </div>
 
       <div class="flex flex-col gap-3">
+        <!-- Textarea -->
         <textarea
           v-model="code"
           @keydown="handleKeydown"
           rows="7"
           spellcheck="false"
-          class="w-full bg-slate-800 border rounded-xl px-4 py-3 text-sm font-mono text-slate-100
-                 placeholder-slate-600 focus:outline-none focus:ring-2 focus:border-transparent resize-none leading-relaxed"
-          :class="testMode
-            ? 'border-amber-500/30 focus:ring-amber-500/50'
-            : 'border-slate-700 focus:ring-blue-500'"
           placeholder="Paste your Python function here…"
+          class="w-full rounded-2xl px-4 py-3 text-sm font-mono text-tum-blue-dark placeholder:text-tum-blue-light
+                 outline-none resize-none leading-relaxed"
+          style="background: rgba(255,255,255,0.7); border: 1.5px solid rgba(0,101,189,0.2); box-shadow: inset 0 1px 0 rgba(255,255,255,0.9);"
         />
 
         <div class="flex items-center justify-between">
-          <div class="flex items-center gap-3">
+          <div class="flex items-center gap-2">
             <input ref="fileInput" type="file" accept=".py" class="hidden" @change="handleFileSelect" />
             <button
               @click="triggerFileInput"
-              class="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700
-                     text-slate-300 hover:text-white text-xs px-3 py-2 rounded-lg transition-colors"
+              class="flex items-center gap-1.5 text-xs text-tum-blue font-medium rounded-full px-4 py-2 transition-opacity hover:opacity-70"
+              :style="glass"
             >
               <span>📎</span>
-              <span>Upload .py file</span>
+              <span>Upload .py</span>
             </button>
-            <span class="text-xs text-slate-600 hidden sm:inline">or paste code · Ctrl+Enter to submit</span>
+            <span class="text-xs text-tum-blue-light hidden sm:inline">or paste · Ctrl+Enter</span>
           </div>
 
           <button
             @click="handleGenerate"
             :disabled="!code.trim() || !model || loading"
-            class="text-white text-sm font-medium px-5 py-2 rounded-lg transition-colors flex items-center gap-2
-                   disabled:bg-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed"
-            :class="testMode
-              ? 'bg-amber-600 hover:bg-amber-500'
-              : 'bg-blue-600 hover:bg-blue-500'"
+            class="rounded-full px-6 py-2.5 text-sm font-semibold text-white transition-opacity
+                   disabled:opacity-40 disabled:cursor-not-allowed"
+            :style="glassPrimary"
           >
-            <span v-if="loading">Generating…</span>
-            <span v-else>Generate Tests</span>
+            {{ loading ? 'Generating…' : 'Generate Tests' }}
           </button>
         </div>
       </div>
-
     </div>
+
   </div>
 </template>
